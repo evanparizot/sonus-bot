@@ -1,3 +1,2 @@
-pub mod ping;
-pub mod youtube;
+pub mod player;
 pub mod meta;

@@ -6,7 +6,7 @@ use tracing::info;
 
 #[group]
 #[commands(play, current, queue, skip, pause, start)]
-pub struct Youtube;
+pub struct Player;
 
 #[command]
 async fn play(ctx: &Context, msg: &Message) -> CommandResult {
@@ -15,6 +15,7 @@ async fn play(ctx: &Context, msg: &Message) -> CommandResult {
 }
 
 #[command]
+#[aliases("nowplaying")]
 async fn current(ctx: &Context, msg: &Message) -> CommandResult {
     info!("current something");
     Ok(())

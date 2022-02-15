@@ -1,23 +1,18 @@
 mod commands;
 mod hooks;
+mod handler;
 
-use std::{collections::{HashSet, HashMap}, env, sync::{Arc, atomic::{Ordering, AtomicUsize}}};
-
-use commands::{ping::*, youtube::*, meta::*};
+use std::{collections::{HashSet, HashMap}, env, sync::{Arc, atomic::{AtomicUsize}}};
+use commands::{player::*, meta::*};
 use hooks::{counter, counter::{MessageCount, CommandCounter}};
+use handler::Handler;
 use serenity::{
-    async_trait,
     client::bridge::gateway::ShardManager,
-    framework::{standard::macros::{group}, StandardFramework},
+    framework::{StandardFramework},
     http::Http,
-    model::{
-        channel::Message,
-        event::ResumedEvent,
-        gateway::Ready,
-    },
     prelude::*,
 };
-use tracing::{error, info};
+use tracing::{error};
 
 
 pub struct ShardManagerContainer;
@@ -26,35 +21,6 @@ impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<Mutex<ShardManager>>;
 }
 
-struct Handler;
-
-#[async_trait]
-impl EventHandler for Handler {
-    async fn ready(&self, _: Context, ready: Ready) {
-        info!("{} is connected!", ready.user.name);
-    }
-
-    async fn message(&self, ctx: Context, message: Message) {
-        if message.content.to_lowercase().contains("owo") {
-            let count = {
-                let data_read = ctx.data.read().await;
-                data_read.get::<MessageCount>().expect("bal").clone()
-            };
-            count.fetch_add(1, Ordering::SeqCst);
-        }
-
-
-        info!("{}", message.id);
-    }
-
-    async fn resume(&self, _: Context, _: ResumedEvent) {
-        info!("Resumed");
-    }
-}
-
-#[group]
-#[commands(ping)]
-struct General;
 
 #[tokio::main]
 async fn main() {
@@ -78,8 +44,7 @@ async fn main() {
     let framework = StandardFramework::new()
         .configure(|c| c.owners(owners).prefix("!"))
         .before(counter::before)
-        .group(&GENERAL_GROUP)
-        .group(&YOUTUBE_GROUP)
+        .group(&PLAYER_GROUP)
         .group(&META_GROUP);
 
     let mut client = Client::builder(&token)
